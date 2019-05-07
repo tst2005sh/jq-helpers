@@ -110,7 +110,7 @@ Add new one with the defined prefix.
 
 ## jsondiff
 
-My current first use case is [jsondiff]().
+My current first use case is [jsondiff](https://github.com/tst2005sh/jsondiff).
 
 I use in shell :
 ```bash
@@ -165,3 +165,7 @@ jq -S -c '
         ;
 .|json2flat|hide_last_array_index|sortallarrays|.[]'
 ```
+
+Note:
+* the `-S` comes from [json2flat](https://github.com/tst2005sh/jsondiff/blob/master/lib/jq.json2flat.lib.sh#18)
+* the `-c` comes from [json2ndjson](https://github.com/tst2005sh/jsondiff/blob/master/lib/jq.json2ndjson.lib.sh#L4)
