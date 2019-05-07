@@ -2,7 +2,7 @@
 
 ## needs and goal
 
-I made my own shell function. I use them with shell pipe.
+I made my own shell functions (that use jq). I use them with shell pipe.
 
 I got things like
 ```bash
