@@ -75,7 +75,30 @@ It supports :
 
 ## jq_run
 
-A shell function made to 
+I already have lot of shell function.
+To help me to migrate from calling lot of `jq` to call `jq_stack` ... I decide to make `jq_run` that call function with a defined prefixe.
+
+Then `jq_run foo` will not call the `foo` shell function but `jq_cmd_foo` instead.
+
+The functions in the sample becomes:
+
+```bash
+jq_cmd_unpack() {
+	jq_stack call '.data'
+}
+jq_cmd_pack() {
+	jq_stack call '{"data":.}'
+}
+jq_cmd_sort_by() {
+	jq_stack call 'sort_by("id")'
+}
+
+cat file.json | jq_run unpack sort_by_id pack > file2.json
+```
+
+The prefix allow me to have both old and new way to do at the same time.
+Keeping existing shell function as is (with direct `jq` call)
+Add new one with the defined prefix.
 
 ## limitation
 
