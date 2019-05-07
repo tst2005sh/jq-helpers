@@ -75,12 +75,12 @@ It supports :
 
 ## jq_run
 
-I already have lot of shell function.
-To help me to migrate from calling lot of `jq` to call `jq_stack` ... I decide to make `jq_run` that call function with a defined prefixe.
+I already have lot of shell functions.
+To help me to migrate from calling lot of `jq` to call `jq_stack` ... I decided to make `jq_run` that call functions with a defined prefixe.
 
-Then `jq_run foo` will not call the `foo` shell function but `jq_cmd_foo` instead.
+Then `jq_run foo` will not call the `foo` shell function but the `jq_cmd_foo` one instead.
 
-The functions in the sample becomes:
+The functions in the previous sample becomes:
 
 ```bash
 jq_cmd_unpack() {
@@ -97,7 +97,9 @@ cat file.json | jq_run unpack sort_by_id pack > file2.json
 ```
 
 The prefix allow me to have both old and new way to do at the same time.
-Keeping existing shell function as is (with direct `jq` call)
+
+Keeping existing shell function as is (with direct `jq` call).
+
 Add new one with the defined prefix.
 
 ## limitation
