@@ -70,8 +70,8 @@ cat file.json | jq_stack run > file2.json
 A shell function that help to prepare a jq call.
 It supports :
 * jq options
-* jq function definition
-* jq filter
+* jq function definitions
+* jq filters
 
 ## jq_run
 
