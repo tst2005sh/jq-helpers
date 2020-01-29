@@ -27,6 +27,11 @@ jq_stack() {
 			return $?
 		;;
 		(*)
+			if command >/dev/null 2>&1 -v "jq_stack_$1"; then
+				local cmd="jq_stack_$1"; shift
+				"$cmd" "$@"
+				return $?
+			fi
 			echo >&2 "ERROR: jq_stack: Invalid argument #1";
 			return 1
 		;;
