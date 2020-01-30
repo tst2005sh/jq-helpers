@@ -2,7 +2,7 @@
 # 1 arg: "modname(...)" # ignore (...)
 jq_stack_envfunction() {
 	# extract only the modname (without parentesis/arguments)
-        local vname="$(printf '%s%s' "jq_function_" "${1%%(*}")"
+        local vname="$(printf '%s%s' "jq_function_" "${1%%\(*}")"
 
 	# test if the function_def is available in env
         if ! eval "test -n \"\${$vname}\""; then

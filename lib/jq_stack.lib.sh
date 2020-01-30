@@ -3,7 +3,7 @@ jq_stack() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		(init)
-			jq_stack_options='';jq_stack_functions='';jq_stack_calls=''
+			jq_stack_options='';jq_stack_functions='';jq_stack_functions_loaded='';jq_stack_calls=''
 		;;
 		(call)
 			if [ -z "$jq_stack_calls" ]; then
@@ -15,14 +15,41 @@ jq_stack() {
 		(option)
 			jq_stack_options="$jq_stack_options $2";shift
 		;;
-		(function)
+		(function|rawdef)
 			jq_stack_functions="$jq_stack_functions$2";shift
 		;;
+		(envfunction)
+			local name="${1%%\(*}"
+			local vname="$(printf '%s%s' "jq_function_" "$name")"
+
+			# test if the function_def is available in env
+		        if ! eval "test -n \"\${$vname}\""; then
+				echo >&2 "ERROR: function $vname not available in env"
+		        fi
+			eval "jq_stack rawdef \"\${$vname}\""
+		;;
+		(ifndef)
+			# ifndef <name> function ...
+			if [ "$3" != function ]; then
+				echo >&2 "Syntax Error: must be: ifndef ... function ... got $3 instead of function"
+				return 1
+			fi
+			if case ":$jq_stack_functions_defined:" in
+				(*:"$2":*) false;;
+				(*) true ;;
+			esac; then
+				jq_stack_functions_defined="${jq_stack_functions_defined}:$2"
+				shift
+			else	# already defined, skip the next function+value
+				shift 3
+			fi
+		;;
 		(locals)
-			echo "jq_stack_options jq_stack_functions jq_stack_calls"
+			echo "jq_stack_options jq_stack_functions jq_stack_functions_defined jq_stack_calls"
 			return 0
 		;;
 		(run)
+			echo >&2 "jq_stack_functions_defined=$jq_stack_functions_defined"
 			jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
 			return $?
 		;;
