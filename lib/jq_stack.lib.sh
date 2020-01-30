@@ -19,7 +19,7 @@ jq_stack() {
 			jq_stack_functions="$jq_stack_functions$2";shift
 		;;
 		(envfunction)
-			local name="${1%%\(*}"
+			local name="${2%%\(*}"
 			local vname="$(printf '%s%s' "jq_function_" "$name")"
 
 			# test if the function_def is available in env

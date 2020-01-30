@@ -4,7 +4,6 @@ if [ -z "$JQS" ]; then
 	false
 else
 . "${JQS%/*}/jq_stack.lib.sh"
-. "${JQS%/*}/jq_stack_envfunction.lib.sh"
 . "${JQS%/*}/jq_stack_modcall.lib.sh"
 . "${JQS%/*}/jq_stack_modload.lib.sh"
 . "${JQS%/*}/jq_stack_oneline.lib.sh"
