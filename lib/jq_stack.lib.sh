@@ -12,6 +12,13 @@ jq_stack() {
 				jq_stack_calls="$jq_stack_calls"'|'"$2";shift
 			fi
 		;;
+		(precall)
+			if [ -z "$jq_stack_calls" ]; then
+				jq_stack_calls="$2";shift
+			else
+				jq_stack_calls="$2"'|'"$jq_stack_calls";shift
+			fi
+		;;
 		(option)
 			jq_stack_options="$jq_stack_options $2";shift
 		;;
@@ -49,9 +56,16 @@ jq_stack() {
 			return 0
 		;;
 		(run)
-			echo >&2 "jq_stack_functions_defined=$jq_stack_functions_defined"
-			jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
-			return $?
+			if [ "$2" = "-n" ]; then
+				echo jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
+				echo --------------
+				echo "jq_stack_options=$jq_stack_options"
+				echo --------------
+				shift
+			else
+				jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
+				return $?
+			fi
 		;;
 		(*)
 			if command >/dev/null 2>&1 -v "jq_stack_$1"; then
