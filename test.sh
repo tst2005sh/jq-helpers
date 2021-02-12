@@ -3,7 +3,6 @@
 . ./lib/jq_stack.lib.sh
 . ./lib/jq_stack_modcall.lib.sh
 . ./lib/jq_stack_modload.lib.sh
-. ./lib/jq_stack_envfunction.lib.sh
 . ./lib/jq_stack_oneline.lib.sh
 
 export JQ_STACK_MODDIR="../jsondiff/lib"
@@ -15,10 +14,11 @@ test1() {
 	jq_stack run
 }
 
-test1() {
+test2() {
 	jq_stack oneline -c sortallarrays: '.|sortallarrays|.'
 }
 
+if false; then
 jq() {
 	echo >&2 "jq call with $# arg(s)"
 	for x in "$@"; do
@@ -27,7 +27,7 @@ jq() {
 	done
 	command -p jq "$@"
 }
-
+fi
 
 checktest() {
 	read result;
@@ -35,3 +35,4 @@ checktest() {
 }
 
 echo '["3", "1", "2"]' | test1 | checktest
+echo '["3", "1", "2"]' | test2 | checktest
