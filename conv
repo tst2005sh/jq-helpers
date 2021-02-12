@@ -1,0 +1,21 @@
+#!/bin/bash
+
+case "$0" in
+	(/*) scriptdir="$(dirname "$0")";;
+	(*)  scriptdir="$(pwd)/$(dirname "$0")";;
+esac
+
+. "${scriptdir}/lib/require.lib.sh"
+
+cmd="$(basename "$0")"
+
+case "$cmd" in
+	(conv|encode|decode)
+		Require "$cmd"
+		"$cmd" "$@"
+	;;
+	(*)
+		echo >&2 "unsupported command name: $cmd"
+		exit 1
+	;;
+esac
