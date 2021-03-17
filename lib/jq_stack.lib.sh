@@ -24,6 +24,7 @@ jq_stack() {
 		;;
 		(function|rawdef)
 			jq_stack_functions="$jq_stack_functions$2";shift
+			if [ "$2" = "named" ]; then shift 2; fi
 		;;
 		(envfunction)
 			local name="${2%%\(*}";shift
@@ -62,7 +63,7 @@ jq_stack() {
 				echo --------------
 				echo "jq_stack_options=$jq_stack_options"
 				echo --------------
-				shift
+				#return 0
 			else
 				jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
 				return $?
