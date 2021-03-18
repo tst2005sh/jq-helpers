@@ -29,8 +29,19 @@ jq_stack2() {
 				shift
 			fi
 		;;
-		(precall|envfunction)
-set -e;NIY
+		(precall)
+set -e;NIY_precall
+		;;
+		(envfunction)
+			local name="${2%%\(*}";shift
+			local vname="$(printf '%s%s' "jq_function_" "$name")"
+
+			# test if the function_def is available in env
+		        if ! eval "test -n \"\${$vname}\""; then
+				echo >&2 "ERROR: function $vname not available in env"
+		        fi
+			#eval "jq_stack2 rawdef \"\${$vname}\""
+			eval "jq_stack2 function \"\${$vname}\""
 		;;
 		(rawdef)
 set -e;NIY
@@ -73,14 +84,12 @@ set -e;NIY
 			fi
 		;;
 		(*)
-echo "NIY: $1"
-exit 1
-			if command >/dev/null 2>&1 -v "jq_stack_$1"; then
-				local cmd="jq_stack_$1"; shift
+			if command >/dev/null 2>&1 -v "jq_stack2_$1"; then
+				local cmd="jq_stack2_$1"; shift
 				"$cmd" "$@"
 				return $?
 			fi
-			echo >&2 "ERROR: jq_stack: Invalid argument #1";
+			echo >&2 "ERROR: jq_stack2: Invalid argument #1";
 			return 1
 		;;
 		esac

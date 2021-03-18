@@ -1,4 +1,6 @@
 jq_stack2_oneline() {
+	eval "jq $(
+	{
 	jq_stack2 init
 	local dryrun=''
 	while [ $# -gt 0 ]; do
@@ -24,7 +26,7 @@ jq_stack2_oneline() {
 				case "$1" in
 				(*'('*)	# foo(...):
 					jq_stack2 modcall "${1%:}"
-					# jq_stack2 modload "$1 cut at ("
+					# jq_stack2 modload "$1 cut at (" # )
 					# jq_stack2 call "$1 without :"
 				;;
 				(*)	# foo:
@@ -39,7 +41,7 @@ jq_stack2_oneline() {
 		esac
 		shift
 	done
-	jq_stack2 run $dryrun
+	} | jq_stack2 run $dryrun)"
 }
 
 #jq_stack online -c 'foo:' 'foo("x")' 'bar("y")'
