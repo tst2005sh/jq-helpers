@@ -12,11 +12,20 @@ jq_stack2() {
 			shift
 		;;
 		(function)
+			local funcdefclean='def funcdefclean:
+				if type=="array" then
+					(
+					map(sub("^\t?";""))|
+					if first=="" then .[1:] else . end|
+					if last=="" then .[0:-1] else . end
+					)
+				else . end
+			;'
 			if [ "$3" = "named" ] && [ -n "$4" ]; then
-				jq -ncM --arg arg1 "$1" --arg arg2 "$2" --arg arg4 "$4" '{($arg1):($arg2|split("\n")),"name":$arg4}'
+				jq -ncM --arg arg1 "$1" --arg arg2 "$2" --arg arg4 "$4" "$funcdefclean"'{($arg1):($arg2|split("\n")|funcdefclean),"name":$arg4}'
 				shift 3
 			else
-				jq -ncM --arg arg1 "$1" --arg arg2 "$2" '{($arg1):($arg2|split("\n"))}'
+				jq -ncM --arg arg1 "$1" --arg arg2 "$2" "$funcdefclean"'{($arg1):($arg2|split("\n")|funcdefclean)}'
 				shift
 			fi
 		;;
