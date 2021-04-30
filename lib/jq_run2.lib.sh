@@ -12,7 +12,12 @@ jq_gen2_with_prefix() {
 }
 
 jq_run2_with_prefix() {
-	eval "jq $(jq_gen2_with_prefix "$@")"
+	if [ "$1" = "-n" ]; then
+		shift
+		echo >&2 "jq $(jq_gen2_with_prefix "$@")"
+	else
+		eval "jq $(jq_gen2_with_prefix "$@")"
+	fi
 }
 jq_run2() {
 	jq_run2_with_prefix jq_cmd2_ "$@"

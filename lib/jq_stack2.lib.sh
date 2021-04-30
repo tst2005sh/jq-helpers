@@ -16,6 +16,7 @@ jq_stack2() {
 				if type=="array" then
 					(
 					map(sub("^\t?";""))|
+					map(select(test("^#")|not))|
 					if first=="" then .[1:] else . end|
 					if last=="" then .[0:-1] else . end
 					)
@@ -41,7 +42,7 @@ set -e;NIY_precall
 				echo >&2 "ERROR: function $vname not available in env"
 		        fi
 			#eval "jq_stack2 rawdef \"\${$vname}\""
-			eval "jq_stack2 function \"\${$vname}\""
+			eval "jq_stack2 function \"\${$vname}\" named \"$name\""
 		;;
 		(rawdef)
 set -e;NIY
@@ -61,6 +62,16 @@ set -e;NIY
 			shift
 		;;
 		(run)
+			if [ "$2" = "-n" ]; then
+				shift
+			jq >&2 -sr '[	map(.option//empty)[],
+					(	map(select(.function?)) | map(.function|join("\n")) |join("")
+					) + (	map(.call//empty|select(.!="."))|join("|")
+					)
+				]|@sh
+			'
+				return 0
+			fi
 			jq -sr '[	map(.option//empty)[],
 					(	map(select(.function?)) | map(.function|join("\n")) |join("")
 					) + (	map(.call//empty|select(.!="."))|join("|")
@@ -69,14 +80,12 @@ set -e;NIY
 			'
 		;;
 		(run_)
-			shift
 			if [ "$1" = "-n" ]; then
+				shift
 #				echo jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
 #				echo --------------
 #				echo "jq_stack_options=$jq_stack_options"
 #				echo --------------
-# ERROR ici ?			shift
-:
 			else
 #				jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
 				echo '{"run": true}'
@@ -89,7 +98,7 @@ set -e;NIY
 				"$cmd" "$@"
 				return $?
 			fi
-			echo >&2 "ERROR: jq_stack2: Invalid argument #1";
+			echo >&2 "ERROR: jq_stack2: Invalid argument #1 $1";
 			return 1
 		;;
 		esac

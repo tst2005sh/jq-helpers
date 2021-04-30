@@ -57,8 +57,8 @@ jq_stack() {
 			return 0
 		;;
 		(run)
-			shift
-			if [ "$1" = "-n" ]; then
+			if [ "$2" = "-n" ]; then
+				shift
 				echo jq $jq_stack_options "$jq_stack_functions$jq_stack_calls"
 				echo --------------
 				echo "jq_stack_options=$jq_stack_options"
