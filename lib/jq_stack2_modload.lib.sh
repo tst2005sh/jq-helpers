@@ -12,5 +12,3 @@ jq_stack2_modload() {
 		return 1
 	fi
 }
-
-#FIXME: rename jq.*.lib.sh to jq.*.mod.sh ? or jq.function.*.lib.sh ?
