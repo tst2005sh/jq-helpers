@@ -10,7 +10,7 @@ jq_stack3_modcall() {
 	if ! eval "test -n \"\${$vname}\""; then
 		jq_stack3 modload "$name" "$vname" || return $?
 	fi
-	eval "jq_stack3 ifndef \"\$name\" function \"\${$vname}\""
+	#eval "jq_stack3 function \"\${$vname}\" named \"\$name\""
 	jq_stack3 call "${2:-$1}"
 }
 #bug FIXME: multiple call of the same mod load multiple function_def
