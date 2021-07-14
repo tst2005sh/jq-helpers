@@ -25,7 +25,7 @@ jq_stack3() {
 			shift
 		;;
 		(precall)
-			jq -ncM --arg arg1 "call" --arg arg2 "$2" '{($arg1):$arg2,"pre":true}' >> "$JQ_STACK3_TMP"
+			jq -ncM --arg arg2 "$2" '{"call":$arg2,"pre":-1}' >> "$JQ_STACK3_TMP"
 			shift
 		;;
 		(function|rawdef)
@@ -72,14 +72,12 @@ jq_stack3() {
 			;;
 			esac
 			if [ "$(jq <"$JQ_STACK3_TMP" -cM --arg arg2 "$2" '[.,inputs]|any(select(.name==$arg2))')" = true ]; then
-				#jq -ncM --arg arg1 "$1" --arg arg2 "$2" '{($arg1):$arg2}' >> "$JQ_STACK3_TMP"
 				shift 2
 				if [ "$3" = named ]; then
-					echo >&2 "$2 already defined: skip $1 $2 $3 $4"
+					#echo >&2 "$2 already defined: skip $1 $2 $3 $4"
 					shift 2
-				else
-					echo >&2 "$2 already defined: skip $1 $2"
-
+				#else
+					#echo >&2 "$2 already defined: skip $1 $2"
 				fi
 			fi
 			shift
@@ -89,7 +87,10 @@ jq_stack3() {
 			jq -sr '
 			[	map(.option//empty)[],
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
-				) + (	map(.call//empty|select(.!="."))|join("|")
+				) + (
+					map(select(.call)|select(.call!="."))|
+					to_entries|sort_by(if .value.pre then -.key else .key end)|
+					map(.value.call)|join("|")
 				)
 			]|@sh
 			' < "$JQ_STACK3_TMP"
