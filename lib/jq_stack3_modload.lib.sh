@@ -14,7 +14,6 @@ jq_stack3_modload() {
 	local dname="jq_deps_$name"
 	if eval "test -n \"\${$dname}\""; then
 		for dep in $(eval echo "\"\${$dname}\""); do
-			echo >&2 "deps: $dep"
 			jq_stack3 modload "$dep"
 		done
 	fi
