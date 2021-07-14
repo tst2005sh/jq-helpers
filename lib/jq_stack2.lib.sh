@@ -38,9 +38,9 @@ set -e;NIY_precall
 			local vname="$(printf '%s%s' "jq_function_" "$name")"
 
 			# test if the function_def is available in env
-		        if ! eval "test -n \"\${$vname}\""; then
+			if ! eval "test -n \"\${$vname}\""; then
 				echo >&2 "ERROR: function $vname not available in env"
-		        fi
+			fi
 			#eval "jq_stack2 rawdef \"\${$vname}\""
 			eval "jq_stack2 function \"\${$vname}\" named \"$name\""
 		;;
@@ -54,7 +54,7 @@ set -e;NIY
 				echo >&2 "Syntax Error: must be: ifndef ... function ... got $3 instead of function"
 				return 1
 			fi
-			
+
 #			jq -nc 	--arg a1 "$1" --arg a2 "$2" --arg a4 "$4" '{($a1): {name: $a2, function: $a4}}'
 #			shift 3
 

@@ -31,9 +31,9 @@ jq_stack() {
 			local vname="$(printf '%s%s' "jq_function_" "$name")"
 
 			# test if the function_def is available in env
-		        if ! eval "test -n \"\${$vname}\""; then
+			if ! eval "test -n \"\${$vname}\""; then
 				echo >&2 "ERROR: function $vname not available in env"
-		        fi
+			fi
 			eval "jq_stack rawdef \"\${$vname}\""
 		;;
 		(ifndef)

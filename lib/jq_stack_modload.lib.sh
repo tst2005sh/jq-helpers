@@ -8,7 +8,7 @@ jq_stack_modload() {
 	fi
 	. "$dir/$fname.jq.lib.sh"
 	if ! eval "test -n \"\${$vname}\""; then
-                echo >&2 "ERROR: $vname not available in env"
+		echo >&2 "ERROR: $vname not available in env"
 		return 1
 	fi
 }
