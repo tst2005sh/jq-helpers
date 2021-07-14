@@ -1,8 +1,8 @@
 #!/bin/sh
 
 . ./lib/jq_stack3.lib.sh
-. ./lib/jq_stack3_modcall.lib.sh
-. ./lib/jq_stack3_modload.lib.sh
+#. ./lib/jq_stack3_modcall.lib.sh
+#. ./lib/jq_stack3_modload.lib.sh
 #. ./lib/jq_stack3_oneline.lib.sh
 
 export JQ_STACK3_MODDIR="../jsondiff/lib"
@@ -33,7 +33,7 @@ test2a() {
 test1a() {
 	jq_stack3 init
 	jq_stack3 option -c
-	jq_stack3 modcall sortallarrays '.|sortallarrays|.'
+	jq_stack3 modload sortallarrays call '.|sortallarrays|.'
 	#jq_stack3 cat
 	#jq_stack3 gen
 	jq_stack3 run

@@ -1,7 +1,5 @@
 
 . ./lib/jq_stack3.lib.sh
-#. ./lib/jq_stack3_modload.lib.sh
-#. ./lib/jq_stack3_modcall.lib.sh
 
 jq_stack3 init
 

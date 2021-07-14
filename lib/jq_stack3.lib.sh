@@ -105,6 +105,38 @@ jq_stack3() {
 			${self} deinit
 			eval "$eval"
 		;;
+		(modload)
+			shift
+			local name="$1"
+			local fname="jq_function_$name"
+			if eval "test -z \"\${$fname}\""; then
+				local dir="${JQ_STACK3_MODDIR:-.}"
+				if [ ! -d "$dir" ]; then
+					echo >&2 "No such dir $dir"
+					return 1
+				fi
+				. "$dir/$name.jq.lib.sh"
+				if ! eval "test -n \"\${$fname}\""; then
+					echo >&2 "ERROR: $fname not available in env"
+					return 1
+				fi
+			fi
+			local dname="jq_deps_$name"
+			if eval "test -n \"\${$dname}\""; then
+				for dep in $(eval echo "\"\${$dname}\""); do
+					jq_stack3 modload "$dep"
+				done
+			fi
+			jq_stack3 ifndef "$name" envfunction "$name"
+		;;
+		# 1 arg: "modname"
+		# 1 arg: "modname(...)"
+		(modcall|modprecall)
+			local arg1="${1#mod}";shift
+			local arg2="$1";shift
+			set -- modload "${arg2%%\(*}" "$arg1" "$arg2" "$@"
+			continue
+		;;
 		(*)
 			local cmd="${self}_$1"
 			if ! command >/dev/null 2>&1 -v "$cmd"; then
