@@ -12,8 +12,9 @@ jq_gen2_with_prefix() {
 }
 
 jq_run2_with_prefix() {
-	if [ "$1" = "-n" ]; then
-		shift
+	if [ "$2" = "-n" ]; then
+		local a="$1";shift 2
+		set -- "$a" "$@"
 		echo >&2 "jq $(jq_gen2_with_prefix "$@")"
 	else
 		eval "jq $(jq_gen2_with_prefix "$@")"
