@@ -85,6 +85,7 @@ jq_stack3() {
 		(cat)	[ ! -t 1 ] && cat -- "$JQ_STACK3_TMP" || jq -c . < "$JQ_STACK3_TMP";;
 		(gen)
 			jq -sr '
+			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
 			[	map(.option//empty)[],
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
 				) + (
@@ -92,7 +93,7 @@ jq_stack3() {
 					to_entries|sort_by(if .value.pre then -.key else .key end)|
 					map(.value.call)|join("|")
 				)
-			]|@sh
+			]|tosh
 			' < "$JQ_STACK3_TMP"
 		;;
 		(run)
