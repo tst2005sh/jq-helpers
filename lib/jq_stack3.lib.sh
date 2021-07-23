@@ -4,7 +4,7 @@ jq_stack3() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		(init)
-			JQ_STACK3_TMP="$(TMPDIR=/dev/shm mktemp -q || mktemp)" || return 1
+			JQ_STACK3_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
 			shift;continue
 		;;
 		(locals)
