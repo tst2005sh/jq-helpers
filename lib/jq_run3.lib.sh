@@ -5,7 +5,7 @@ jq_gen3_with_prefix() {
 	for cmd in "$@"; do
 		"$prefix$cmd"
 	done
-	jq_stack3 gen
+	jq_stack3 gen deinit
 }
 jq_gen3() {
 	jq_gen3_with_prefix jq_cmd3_ "$@"
