@@ -99,7 +99,7 @@ jq_stack3() {
 		(run)
 			if [ "$2" = "-n" ]; then
 				shift
-				${self} gen >&2
+				${self} gen deinit >&2
 				return 0
 			fi
 			local eval="jq $(${self} gen)"
