@@ -1,4 +1,4 @@
-jq_stack_modload() {
+jq_stack1_modload() {
 	local fname="$1";shift
 	local vname="jq_function_$fname"
 	local dir="${JQ_STACK_MODDIR:-.}"

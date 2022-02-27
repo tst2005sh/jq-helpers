@@ -1,21 +1,21 @@
 #!/bin/sh
 
-. ./lib/jq_stack.lib.sh
-. ./lib/jq_stack_modcall.lib.sh
-. ./lib/jq_stack_modload.lib.sh
-. ./lib/jq_stack_oneline.lib.sh
+. ./lib/jq_stack1.lib.sh
+. ./lib/jq_stack1_modcall.lib.sh
+. ./lib/jq_stack1_modload.lib.sh
+. ./lib/jq_stack1_oneline.lib.sh
 
 export JQ_STACK_MODDIR="../jsondiff/lib"
 
 test1() {
-	jq_stack init
-	jq_stack option -c
-	jq_stack modcall sortallarrays '.|sortallarrays|.'
-	jq_stack run
+	jq_stack1 init
+	jq_stack1 option -c
+	jq_stack1 modcall sortallarrays '.|sortallarrays|.'
+	jq_stack1 run
 }
 
 test2() {
-	jq_stack oneline -c sortallarrays: '.|sortallarrays|.'
+	jq_stack1 oneline -c sortallarrays: '.|sortallarrays|.'
 }
 
 if false; then

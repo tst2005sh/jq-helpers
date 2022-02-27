@@ -1,5 +1,5 @@
 
-jq_stack() {
+jq_stack1() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		(init)
@@ -34,7 +34,7 @@ jq_stack() {
 			if ! eval "test -n \"\${$vname}\""; then
 				echo >&2 "ERROR: function $vname not available in env"
 			fi
-			eval "jq_stack rawdef \"\${$vname}\""
+			eval "jq_stack1 rawdef \"\${$vname}\""
 		;;
 		(ifndef)
 			# ifndef <name> function ...
@@ -70,12 +70,12 @@ jq_stack() {
 			fi
 		;;
 		(*)
-			if command >/dev/null 2>&1 -v "jq_stack_$1"; then
-				local cmd="jq_stack_$1"; shift
+			if command >/dev/null 2>&1 -v "jq_stack1_$1"; then
+				local cmd="jq_stack1_$1"; shift
 				"$cmd" "$@"
 				return $?
 			fi
-			echo >&2 "ERROR: jq_stack: Invalid argument #1";
+			echo >&2 "ERROR: jq_stack1: Invalid argument #1";
 			return 1
 		;;
 		esac
