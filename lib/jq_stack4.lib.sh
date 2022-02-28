@@ -1,37 +1,45 @@
 
-jq_stack3() {
-	local self=jq_stack3
+jq_stack4() {
+	local self=jq_stack4
 	while [ $# -gt 0 ]; do
+
 		case "$1" in
-		(init)
-			JQ_STACK3_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
+		(:rawdef)	echo >&2 "OBSOLETED; Use $self :function instead of $self :rawdef"; return 1;;
+		(:locals)	echo >&2 "OBSOLETED"; return 1;;
+#		(:rawdef)	shift; set -- :function "$@";;
+#		(:locals)	return 0;;
+		esac
+
+		case "$1" in
+		(:strict) JQ_STACK4_STRICT=true ;;
+		(:nostrict) JQ_STACK4_STRICT=false ;;
+		(:init)
+			JQ_STACK4_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
 			shift;continue
 		;;
-		(locals)
-			return 0
-		;;
-		(deinit)
-			[ -z "$JQ_STACK3_TMP" ] || [ ! -f "$JQ_STACK3_TMP" ] || rm -f "$JQ_STACK3_TMP" >&2
+		(:deinit)
+			[ -z "$JQ_STACK4_TMP" ] || [ ! -f "$JQ_STACK4_TMP" ] || rm -f "$JQ_STACK4_TMP" >&2
 			shift;continue
 		;;
 		esac
-		if [ -z "$JQ_STACK3_TMP" ] || [ ! -f "$JQ_STACK3_TMP" ]; then
-			echo >&2 "ERROR: ${self}: not initialized. Please use $self init"
-			return 1
+		if [ -z "$JQ_STACK4_TMP" ] || [ ! -f "$JQ_STACK4_TMP" ]; then
+			if ${JQ_STACK4_STRICT:-false}; then
+				echo >&2 "ERROR: ${self}: not initialized (in strict mode). Use \"$self :init\" before this action (or disable the strict mode with \"$self :nostrict\")"
+				return 1
+			fi
+			# nostrict, auto init
+			$self :init
 		fi
 		case "$1" in
-		(call|option)
-			jq -ncM --arg arg1 "$1" --arg arg2 "$2" '{($arg1):$arg2}' >> "$JQ_STACK3_TMP"
+		(:call|:option)
+			jq -ncM --arg arg1 "${1#:}" --arg arg2 "$2" '{($arg1):$arg2}' >> "$JQ_STACK4_TMP"
 			shift
 		;;
-		(precall)
-			jq -ncM --arg arg2 "$2" '{"call":$arg2,"pre":-1}' >> "$JQ_STACK3_TMP"
+		(:precall)
+			jq -ncM --arg arg2 "$2" '{"call":$arg2,"pre":-1}' >> "$JQ_STACK4_TMP"
 			shift
 		;;
-		(function|rawdef)
-			if [ "$1" = rawdef ]; then
-				shift; set -- function "$@"
-			fi
+		(:function)
 			local funcdefclean='def funcdefclean:
 				if type=="array" then
 					(
@@ -42,17 +50,24 @@ jq_stack3() {
 					)
 				else . end
 			;'
+
+			# Compat, try to detect wrong usage
 			if [ "$3" = "named" ] && [ -n "$4" ]; then
-				jq -ncM --arg arg1 "$1" --arg arg2 "$2" --arg arg4 "$4" \
-					"$funcdefclean"'{"name":$arg4,($arg1):($arg2|split("\n")|funcdefclean)}' >> "$JQ_STACK3_TMP"
+				echo >&2 "WARNING: $self $1 ... $3 ... ; possible wrong usage, it should be $self $1 ... :$3 ..."
+			fi
+
+			# Support ":function $CODE :named $NAME" like ":ifndef $NAME :function $CODE"
+			if [ "${3#:}" = "named" ] && [ -n "$4" ]; then
+				jq -ncM --arg arg1 "${1#:}" --arg arg2 "$2" --arg arg4 "$4" \
+					"$funcdefclean"'{"name":$arg4,($arg1):($arg2|split("\n")|funcdefclean)}' >> "$JQ_STACK4_TMP"
 				shift 3
 			else
-				jq -ncM --arg arg1 "$1" --arg arg2 "$2" \
-					"$funcdefclean"'{($arg1):($arg2|split("\n")|funcdefclean)}' >> "$JQ_STACK3_TMP"
+				jq -ncM --arg arg1 "${1#:}" --arg arg2 "$2" \
+					"$funcdefclean"'{($arg1):($arg2|split("\n")|funcdefclean)}' >> "$JQ_STACK4_TMP"
 				shift
 			fi
 		;;
-		(envfunction)
+		(:envfunction)
 			local name="${2%%\(*}";shift
 			local vname="$(printf '%s%s' "jq_function_" "$name")"
 
@@ -60,30 +75,27 @@ jq_stack3() {
 			if ! eval "test -n \"\${$vname}\""; then
 				echo >&2 "ERROR: function $vname not available in env"
 			fi
-			eval "${self} function \"\${$vname}\" named \"$name\"" >> "$JQ_STACK3_TMP"
+			eval "${self} :function \"\${$vname}\" :named \"$name\"" >> "$JQ_STACK4_TMP"
 		;;
-		(ifndef)
+		(:ifndef)
 			# ifndef <name> function|envfunction ...
 			case "$3" in
-			(function|envfunction);;
+			(:function|:envfunction);;
 			(*)
-				echo >&2 "Syntax Error: must be: ifndef ... envfunction|function ... got $3"
+				echo >&2 "Syntax Error: must be: :ifndef ... :envfunction|:function ... got $3"
 				return 1
 			;;
 			esac
-			if [ "$(jq <"$JQ_STACK3_TMP" -cM --arg arg2 "$2" '[.,inputs]|any(select(.name==$arg2))')" = true ]; then
+			if [ "$(jq <"$JQ_STACK4_TMP" -cM --arg arg2 "$2" '[.,inputs]|any(select(.name==$arg2))')" = true ]; then
 				shift 2
-				if [ "$3" = named ]; then
-					#echo >&2 "$2 already defined: skip $1 $2 $3 $4"
+				if [ "$3" = ":named" ]; then
 					shift 2
-				#else
-					#echo >&2 "$2 already defined: skip $1 $2"
 				fi
 			fi
 			shift
 		;;
-		(cat)	[ ! -t 1 ] && cat -- "$JQ_STACK3_TMP" || jq -c . < "$JQ_STACK3_TMP";;
-		(gen)
+		(:cat)	[ ! -t 1 ] && cat -- "$JQ_STACK4_TMP" || jq -c . < "$JQ_STACK4_TMP";;
+		(:gen)
 			jq -sr '
 			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
 			[	map(.option//empty)[],
@@ -94,24 +106,24 @@ jq_stack3() {
 					map(.value.call)|join("|")
 				)
 			]|tosh
-			' < "$JQ_STACK3_TMP"
+			' < "$JQ_STACK4_TMP"
 		;;
-		(run)
+		(:run)
 			if [ "$2" = "-n" ]; then
 				shift
-				${self} gen deinit >&2
+				${self} :gen :deinit >&2
 				return 0
 			fi
-			local eval="jq $(${self} gen)"
-			${self} deinit
+			local eval="jq $(${self} :gen)"
+			${self} :deinit
 			eval "$eval"
 		;;
-		(modload)
+		(:modload)
 			shift
 			local name="$1"
 			local fname="jq_function_$name"
 			if eval "test -z \"\${$fname}\""; then
-				local dir="${JQ_STACK3_MODDIR:-.}"
+				local dir="${JQ_STACK4_MODDIR:-.}"
 				if [ ! -d "$dir" ]; then
 					echo >&2 "No such dir $dir"
 					return 1
@@ -125,20 +137,23 @@ jq_stack3() {
 			local dname="jq_deps_$name"
 			if eval "test -n \"\${$dname}\""; then
 				for dep in $(eval echo "\"\${$dname}\""); do
-					jq_stack3 modload "$dep"
+					$self :modload "$dep"
 				done
 			fi
-			jq_stack3 ifndef "$name" envfunction "$name"
+			$self :ifndef "$name" :envfunction "$name"
 		;;
 		# 1 arg: "modname"
 		# 1 arg: "modname(...)"
-		(modcall|modprecall)
-			local arg1="${1#mod}";shift
-			local arg2="$1";shift
-			set -- modload "${arg2%%\(*}" "$arg1" "$arg2" "$@"
+		(:modcall|:modprecall)
+			local arg1="${1#:mod}";shift	# call|precall
+			local arg2="$1";shift		# NAME(...)
+			set -- :modload "${arg2%%\(*}" ":$arg1" "$arg2" "$@"
+			#      :modload  NAME           :call    NAME(...)
 			continue
 		;;
 		(*)
+			echo >&2 "DEPRECATED $1 ..."; return 1;
+
 			local cmd="${self}_$1"
 			if ! command >/dev/null 2>&1 -v "$cmd"; then
 				echo >&2 "ERROR: ${self}: Invalid argument #1 $1";
