@@ -125,10 +125,10 @@ jq_stack3() {
 			local dname="jq_deps_$name"
 			if eval "test -n \"\${$dname}\""; then
 				for dep in $(eval echo "\"\${$dname}\""); do
-					jq_stack3 modload "$dep"
+					$self modload "$dep"
 				done
 			fi
-			jq_stack3 ifndef "$name" envfunction "$name"
+			$self ifndef "$name" envfunction "$name"
 		;;
 		# 1 arg: "modname"
 		# 1 arg: "modname(...)"
