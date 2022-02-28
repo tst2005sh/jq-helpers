@@ -1,8 +1,9 @@
 #!/bin/sh
 
 . ./lib/jq_stack4.lib.sh
+. ./lib/jq_stack4compat3.lib.sh
 
-export JQ_STACK4_MODDIR="../jsondiff/lib"
+export JQ_STACK3_MODDIR="../jsondiff/lib"
 
 #jq -rc '["jq", .option, (.functiondef + .call)]|@sh'
 
@@ -15,7 +16,7 @@ export JQ_STACK4_MODDIR="../jsondiff/lib"
 #	]|@sh'
 #}
 test2a() {
-	jq_stack4 :init
+	jq_stack3 init
 	{
 	echo '{"option": "-c"}'
 	echo '{"name":"sortallarrays"}'
@@ -23,19 +24,19 @@ test2a() {
 	echo '{"modload": "sortallarrays"}'
 	echo '{"call":".|sortallarrays|."}'
 	} > "$JQ_STACK4_TMP"
-	jq_stack4 :run
+	jq_stack3 run
 }
 
 test1a() {
-#	jq_stack4 :init
-	jq_stack4 :option -c
-	jq_stack4 :modload sortallarrays :call '.|sortallarrays|.'
-	#jq_stack4 :cat
-	#jq_stack4 :gen
-	jq_stack4 :run
+	jq_stack3 init
+	jq_stack3 option -c
+	jq_stack3 modload sortallarrays call '.|sortallarrays|.'
+	#jq_stack3 cat
+	#jq_stack3 gen
+	jq_stack3 run
 }
 #test2b() {
-#	jq_stack4 :oneline -c sortallarrays: '.|sortallarrays|.'
+#	jq_stack3 oneline -c sortallarrays: '.|sortallarrays|.'
 #}
 
 checktest() {
@@ -47,4 +48,4 @@ echo '["3", "1", "2"]' | test2a | checktest
 #echo '["3", "1", "2"]' | test2b | checktest
 echo '["3", "1", "2"]' | test1a | checktest
 
-jq_stack4 :deinit
+jq_stack3 deinit

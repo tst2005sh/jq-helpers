@@ -2,7 +2,6 @@
 jq_stack4() {
 	local self=jq_stack4
 	while [ $# -gt 0 ]; do
-
 		case "$1" in
 		(:rawdef)	echo >&2 "OBSOLETED; Use $self :function instead of $self :rawdef"; return 1;;
 		(:locals)	echo >&2 "OBSOLETED"; return 1;;
@@ -11,8 +10,10 @@ jq_stack4() {
 		esac
 
 		case "$1" in
-		(:strict) JQ_STACK4_STRICT=true ;;
-		(:nostrict) JQ_STACK4_STRICT=false ;;
+		(:autoinit)	JQ_STACK4_AUTOINIT=true ;shift;continue;;
+		(:noautoinit)	JQ_STACK4_AUTOINIT=false;shift;continue;;
+		(:fallback)	JQ_STACK4_FALLBACK=true ;shift;continue;;
+		(:nofallback)	JQ_STACK4_FALLBACK=false;shift;continue;;
 		(:init)
 			JQ_STACK4_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
 			shift;continue
@@ -23,8 +24,8 @@ jq_stack4() {
 		;;
 		esac
 		if [ -z "$JQ_STACK4_TMP" ] || [ ! -f "$JQ_STACK4_TMP" ]; then
-			if ${JQ_STACK4_STRICT:-false}; then
-				echo >&2 "ERROR: ${self}: not initialized (in strict mode). Use \"$self :init\" before this action (or disable the strict mode with \"$self :nostrict\")"
+			if [ "${JQ_STACK4_AUTOINIT:-true}" != true ]; then
+				echo >&2 "ERROR: ${self}: not initialized (auto init is disabled). Use \"$self :init\" before this action (or enable auto init with \"$self :autoinit\")"
 				return 1
 			fi
 			# nostrict, auto init
@@ -152,9 +153,11 @@ jq_stack4() {
 			continue
 		;;
 		(*)
-			echo >&2 "DEPRECATED $1 ..."; return 1;
-
-			local cmd="${self}_$1"
+			if [ "${JQ_STACK4_FALLBACK:-false}" != true ]; then
+				echo >&2 "ERROR: ${self}: fallback feature is disabled by default. Use \"$self :fallback\" before this action ($1) to enable it."
+				return 1
+			fi
+			local cmd="${self}_${1#:}"
 			if ! command >/dev/null 2>&1 -v "$cmd"; then
 				echo >&2 "ERROR: ${self}: Invalid argument #1 $1";
 				return 1
