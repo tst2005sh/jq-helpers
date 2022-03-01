@@ -12,8 +12,8 @@ jq_stack4() {
 		case "$1" in
 		(:autoinit)	JQ_STACK4_AUTOINIT=true ;shift;continue;;
 		(:noautoinit)	JQ_STACK4_AUTOINIT=false;shift;continue;;
-		(:fallback)	JQ_STACK4_FALLBACK=true ;shift;continue;;
-		(:nofallback)	JQ_STACK4_FALLBACK=false;shift;continue;;
+		(:external)	JQ_STACK4_EXTERNAL=true ;shift;continue;;
+		(:noexternal)	JQ_STACK4_EXTERNAL=false;shift;continue;;
 		(:init)
 			JQ_STACK4_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
 			shift;continue
@@ -45,7 +45,7 @@ jq_stack4() {
 			$self :option.. "$1" "$2" "$3"
 			shift 2
 		;;
-		(--) TODO ;;
+		# (--) TODO ;;
 		(-*)
 			echo >&2 "ERROR: $self does not known this jq option ($1)"
 			return 1
@@ -193,19 +193,28 @@ jq_stack4() {
 			set -- :modload "$name" :modoption "$name" ":$cmd" "$code" "$@"
 			continue
 		;;
-		(*)
-			if [ "${JQ_STACK4_FALLBACK:-false}" != true ]; then
-				echo >&2 "ERROR: ${self}: fallback feature is disabled by default. Use \"$self :fallback\" before this action ($1) to enable it."
+		(:autocall) JQ_STACK4_AUTOCALL=true;;
+		(:noautocall) JQ_STACK4_AUTOCALL=false;;
+		(:*)
+			if [ "${JQ_STACK4_EXTERNAL:-false}" != true ]; then
+				echo >&2 "ERROR: ${self}: external commands are disabled by default. Use \"$self :external\" before this action ($1) to enable it."
 				return 1
 			fi
 			local cmd="${self}_${1#:}"
 			if ! command >/dev/null 2>&1 -v "$cmd"; then
-				echo >&2 "ERROR: ${self}: Invalid argument #1 $1";
+				echo >&2 "ERROR: ${self}: Invalid command $1";
 				return 1
 			fi
 			shift
 			"$cmd" "$@"
 			return $?
+		;;
+		(*)
+			if [ "${JQ_STACK4_AUTOCALL:-false}" != true ]; then
+				echo >&2 "ERROR: ${self}: autocall are disabled. Use \"$self :autocall\" before this action to enable it."
+				return 1
+			fi
+			$self :call "$1"
 		;;
 		esac
 		shift
