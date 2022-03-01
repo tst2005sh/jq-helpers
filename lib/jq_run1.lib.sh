@@ -1,14 +1,14 @@
 
-jq_run_with_prefix() {
-	for var in $(jq_stack locals); do local "$var"; done
-	#local jq__stack_functions jq_stack_options jq_stack_calls
+jq_run1_with_prefix() {
+	for var in $(jq_stack1 locals); do local "$var"; done
+	#local jq_stack_functions jq_stack_options jq_stack_calls
 	local prefix="$1";shift
-	jq_stack init
+	jq_stack1 init
 	for cmd in "$@"; do
 		"$prefix$cmd"
 	done
-	jq_stack run
+	jq_stack1 run
 }
-jq_run() {
-	jq_run_with_prefix jq_cmd_ "$@"
+jq_run1() {
+	jq_run1_with_prefix jq_cmd1_ "$@"
 }
