@@ -21,7 +21,17 @@ test1d() {
 	jq_stack4 :modcall foo
 	jq_stack4 :run
 }
+test1e() {
+	jq_option_foo='-r'
+	jq_function_foo='def foo: "ok";'
+#	jq_stack4 :init
+	jq_stack4 -n
+	jq_stack4 --arg "fo o" "FOO BAR"
+	jq_stack4 :modcall foo
+	jq_stack4 :gen :deinit
+}
 
+#test1e; exit
 
 checktest() {
 	read result;
