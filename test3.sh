@@ -28,6 +28,7 @@ test2a() {
 	echo '{"call":".|sortallarrays|."}'
 	} > "$JQ_STACK3_TMP"
 	jq_stack3 run
+	jq_stack3 deinit
 }
 
 test1a() {
@@ -37,6 +38,7 @@ test1a() {
 	#jq_stack3 cat
 	#jq_stack3 gen
 	jq_stack3 run
+	jq_stack3 deinit
 }
 #test2b() {
 #	jq_stack3 oneline -c sortallarrays: '.|sortallarrays|.'
@@ -51,4 +53,3 @@ echo '["3", "1", "2"]' | test2a | checktest
 #echo '["3", "1", "2"]' | test2b | checktest
 echo '["3", "1", "2"]' | test1a | checktest
 
-jq_stack3 deinit

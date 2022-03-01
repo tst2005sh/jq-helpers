@@ -99,10 +99,11 @@ jq_stack4() {
 		(:gen)
 			jq -sr '
 			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
-			[	map(.option//empty)[],
+			def unique_no_sort_by(f): to_entries|unique_by(.value|f)|sort_by(.key)|map(.value);
+			[	(map(.option//empty)|unique_no_sort_by(.)[]),
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
 				) + (
-					map(select(.call)|select(.call!="."))|
+					map(select(.call?)|select(.call!="."))|
 					to_entries|sort_by(if .value.pre then -.key else .key end)|
 					map(.value.call)|join("|")
 				)
@@ -143,13 +144,25 @@ jq_stack4() {
 			fi
 			$self :ifndef "$name" :envfunction "$name"
 		;;
+		(:modoption)
+			shift
+			local name="$1"
+			local fname="jq_option_$name"
+			if eval "test -n \"\${$fname}\""; then
+				local o
+				eval "o=\"\${$fname}\""
+				shift
+				set -- :option "$o" "$@"
+				continue
+			fi
+		;;
 		# 1 arg: "modname"
 		# 1 arg: "modname(...)"
 		(:modcall|:modprecall)
-			local arg1="${1#:mod}";shift	# call|precall
-			local arg2="$1";shift		# NAME(...)
-			set -- :modload "${arg2%%\(*}" ":$arg1" "$arg2" "$@"
-			#      :modload  NAME           :call    NAME(...)
+			local cmd="${1#:mod}";shift	# call|precall
+			local code="$1";shift		# NAME(...)
+			local name="${code%%\(*}"	# NAME
+			set -- :modload "$name" :modoption "$name" ":$cmd" "$code" "$@"
 			continue
 		;;
 		(*)
