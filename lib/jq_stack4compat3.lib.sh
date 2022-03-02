@@ -14,4 +14,4 @@ jq_stack4_rawdef() {
 	shift; jq_stack4 ":function" "$@"
 }
 
-jq_stack3() { JQ_STACK4_MODDIR="$JQ_STACK3_MODDIR" jq_stack4 :fallback "$@"; }
+jq_stack3() { JQ_STACK4_MODDIR="$JQ_STACK3_MODDIR" jq_stack4 :with external :else external "$@"; }

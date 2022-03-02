@@ -10,23 +10,51 @@ jq_stack4() {
 		esac
 
 		case "$1" in
-		(:autoinit)	JQ_STACK4_AUTOINIT=true ;shift;continue;;
-		(:noautoinit)	JQ_STACK4_AUTOINIT=false;shift;continue;;
-		(:external)	JQ_STACK4_EXTERNAL=true ;shift;continue;;
-		(:noexternal)	JQ_STACK4_EXTERNAL=false;shift;continue;;
-		(:init)
-			JQ_STACK4_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
-			shift;continue
+		(:else)
+			shift
+			case "$1" in
+			(call|external|error) JQ_STACK4_ELSE="$1" ;;
+			(*)
+				echo >&2 "ERROR: $self: unknown value for :else argument. Expected: call|external|error, got: $1"
+				return 1
+			;;
+			esac
+			shift; continue
 		;;
-		(:deinit)
-			[ -z "$JQ_STACK4_TMP" ] || [ ! -f "$JQ_STACK4_TMP" ] || rm -f "$JQ_STACK4_TMP" >&2
-			shift;continue
+		(:with|:without)
+			local v
+			case "$1" in
+			(:with) v=true;;
+			(:without) v=false;;
+			esac
+
+			shift
+			case "$1" in
+			(autoinit) JQ_STACK4_AUTOINIT=$v ;;
+			(external) JQ_STACK4_EXTERNAL=$v ;;
+			(*)
+				echo >&2 "ERROR: $self: unknown argument for :with/:without command. Expected: autoinit|external, got: $1"
+				return 1
+			;;
+			esac
+			shift; continue
 		;;
 		esac
 
+		case "$1" in
+		(:init)
+			JQ_STACK4_TMP="$(mktemp -q /dev/shm/$self.tmp.XXXXXXXX || mktemp /tmp/$self.tmp.XXXXXXXX)" || return 1
+			false
+		;;
+		(:deinit)
+			[ -z "$JQ_STACK4_TMP" ] || [ ! -f "$JQ_STACK4_TMP" ] || rm -f "$JQ_STACK4_TMP" >&2
+			false
+		;;
+		esac || { shift; continue; }
+
 		if [ -z "$JQ_STACK4_TMP" ] || [ ! -f "$JQ_STACK4_TMP" ]; then
 			if [ "${JQ_STACK4_AUTOINIT:-true}" != true ]; then
-				echo >&2 "ERROR: ${self}: not initialized (auto init is disabled). Use \"$self :init\" before this action (or enable auto init with \"$self :autoinit\")"
+				echo >&2 "ERROR: ${self}: not initialized (auto init is disabled). Use \"$self :init\" before this action (or enable auto init with \"$self :with autoinit\")"
 				return 1
 			fi
 			# autoinit
@@ -34,35 +62,47 @@ jq_stack4() {
 		fi
 
 		case "$1" in
-		(-[sRncCMaSrje]|--version|--seq|--stream|--slurp|--raw-input|--null-input|--compact-output|--tab|--color-output|--monochrome-output|--ascii-output|--unbuffered|--sort-keys|--raw-output|--join-output|--exit-status)
-			$self :option "$1"
-		;;
-		(--indent|-f|--from-file|-L) # 1 arg
-			$self :option. "$1" "$2"
-			shift 1
-		;;
-		(--arg|--argjson|--slurpfile|--argfile) # 2 args
-			$self :option.. "$1" "$2" "$3"
-			shift 2
-		;;
-		# (--) TODO? ;;
-		(-*)
-			echo >&2 "ERROR: $self does not known this jq option ($1)"
-			return 1
-		;;
-		(:option.)
+		(-*) set -- :option: "$@";;
+		esac
+
+		case "$1" in
+		(:option:)
 			shift
-			jq -ncM --arg arg1 "$1" --arg arg2 "$2" '{"option":[$arg1,$arg2]}' >> "$JQ_STACK4_TMP"
-			shift 1
-		;;
-		(:option..)
-			shift
-			jq -ncM --arg arg1 "$1" --arg arg2 "$2" --arg arg3 "$3" '{"option":[$arg1,$arg2,$arg3]}' >> "$JQ_STACK4_TMP"
-			shift 2
+			case "$1" in
+			(-[sRncCMaSrje]|--version|--seq|--stream|--slurp|--raw-input|--null-input|--compact-output|--tab|--color-output|--monochrome-output|--ascii-output|--unbuffered|--sort-keys|--raw-output|--join-output|--exit-status)
+				$self :option:0arg "$1"
+			;;
+			(--indent|-f|--from-file|-L) # 1 arg
+				$self :option:1arg "$1" "$2"
+				shift 1
+			;;
+			(--arg|--argjson|--slurpfile|--argfile) # 2 args
+				$self :option:2arg "$1" "$2" "$3"
+				shift 2
+			;;
+			(--|--*|-*|*)
+				echo >&2 "ERROR: $self does not known this jq option ($1)"
+				return 1
+			;;
+			esac
 		;;
 		(:call|:option)
-			jq -ncM --arg arg1 "${1#:}" --arg arg2 "$2" '{($arg1):$arg2}' >> "$JQ_STACK4_TMP"
+			local k="${1#:}"; shift
+			jq -ncM --arg k "$k" --arg opt "$1" '{($k):$opt}' >> "$JQ_STACK4_TMP"
+		;;
+		(:option:0arg)
+			local k="${1#:}"; k="${k%%:*}"; shift
+			jq -ncM --arg k "$k" --arg opt "$1" '{($k):$opt}' >> "$JQ_STACK4_TMP"
+		;;
+		(:option:1arg)
 			shift
+			jq -ncM --arg k "option" --arg opt "$1" --arg arg1 "$2" '{($k):[$opt,$arg1]}' >> "$JQ_STACK4_TMP"
+			shift 1
+		;;
+		(:option:2arg)
+			shift
+			jq -ncM --arg k "option" --arg opt "$1" --arg arg1 "$2" '{($k):[$opt,$arg1,$arg2]}' >> "$JQ_STACK4_TMP"
+			shift 2
 		;;
 		(:precall)
 			jq -ncM --arg arg2 "$2" '{"call":$arg2,"pre":-1}' >> "$JQ_STACK4_TMP"
@@ -193,11 +233,9 @@ jq_stack4() {
 			set -- :modload "$name" :modoption "$name" ":$cmd" "$code" "$@"
 			continue
 		;;
-		(:autocall) JQ_STACK4_AUTOCALL=true;;
-		(:noautocall) JQ_STACK4_AUTOCALL=false;;
 		(:*)
 			if [ "${JQ_STACK4_EXTERNAL:-false}" != true ]; then
-				echo >&2 "ERROR: ${self}: external commands are disabled by default. Use \"$self :external\" before this action ($1) to enable it."
+				echo >&2 "ERROR: ${self}: external commands are disabled by default. Use \"$self :with external\" before this action ($1) to enable it."
 				return 1
 			fi
 			local cmd="jq_cmd${self#jq_stack}_${1#:}" # jq_stack4 :foo should call the shell function jq_cmd4_foo
@@ -210,11 +248,14 @@ jq_stack4() {
 			return $?
 		;;
 		(*)
-			if [ "${JQ_STACK4_AUTOCALL:-false}" != true ]; then
-				echo >&2 "ERROR: ${self}: autocall are disabled. Use \"$self :autocall\" before this action to enable it."
+			case "${JQ_STACK4_ELSE:-error}" in
+			(error)
+				echo >&2 "ERROR: ${self}: unknown command/option ($1). Please configure the behavior (currently: $self :else error). Use \"$self :else call\" to add $1 like \"$self :call $1\" or Use \"$self :else external\" to mimic \"$self :$1\" maybe for jq_stack3 compat (See also :with external)"
 				return 1
-			fi
-			$self :call "$1"
+			;;
+			(call) set -- :call "$@"; continue;;
+			(external) set -- ":$@"; continue;;
+			esac
 		;;
 		esac
 		shift

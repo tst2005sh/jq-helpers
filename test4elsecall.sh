@@ -9,7 +9,7 @@ test3() {
 	jq_function_foo='def foo: "ok";'
 
 #	jq_stack4 :init
-	jq_stack4 :autocall
+	jq_stack4 :else call
 	jq_stack4 -n 'foo' -r
 	jq_stack4 :modload foo
 	jq_stack4 :run :deinit
