@@ -69,7 +69,11 @@ jq_stack4() {
 		(:option:)
 			shift
 			case "$1" in
-			(-[sRncCMaSrje]|--version|--seq|--stream|--slurp|--raw-input|--null-input|--compact-output|--tab|--color-output|--monochrome-output|--ascii-output|--unbuffered|--sort-keys|--raw-output|--join-output|--exit-status)
+			(-[CM]|--color-output|--monochrome-output)
+				# -M will disable the color, even if -C is use after (no need to remind who is use the last)
+				$self :option:0arg "$1"
+			;;
+			(-[sRncaSrje]|--version|--seq|--stream|--slurp|--raw-input|--null-input|--compact-output|--tab|--ascii-output|--unbuffered|--sort-keys|--raw-output|--join-output|--exit-status)
 				$self :option:0arg "$1"
 			;;
 			(--indent|-f|--from-file|-L) # 1 arg
@@ -79,6 +83,10 @@ jq_stack4() {
 			(--arg|--argjson|--slurpfile|--argfile) # 2 args
 				$self :option:2arg "$1" "$2" "$3"
 				shift 2
+			;;
+			(--run-tests)
+				echo >&2 "ERROR: $self: this option will not be supported due to its complexity and positional constraint. Please use jq directly."
+				return 1
 			;;
 			(--|--*|-*|*)
 				echo >&2 "ERROR: $self does not known this jq option ($1)"
@@ -168,7 +176,10 @@ jq_stack4() {
 			jq -sr '
 			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
 			def unique_no_sort_by(f): to_entries|unique_by(.value|f)|sort_by(.key)|map(.value);
-			[	(map(.option//empty)|unique_no_sort_by(@sh)|flatten[]),
+			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|flatten;
+			# options_dedup(.) will keep the first option use
+			# options_dedup(reverse) will keep the last option use
+			[	(options_dedup(reverse)[]),
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
 				) + (
 					map(select(.call?)|select(.call!="."))|
