@@ -200,7 +200,7 @@ jq_stack4() {
 				echo >&2 "ERROR: ${self}: external commands are disabled by default. Use \"$self :external\" before this action ($1) to enable it."
 				return 1
 			fi
-			local cmd="${self}_${1#:}"
+			local cmd="jq_cmd${self#jq_stack}_${1#:}" # jq_stack4 :foo should call the shell function jq_cmd4_foo
 			if ! command >/dev/null 2>&1 -v "$cmd"; then
 				echo >&2 "ERROR: ${self}: Invalid command $1";
 				return 1
