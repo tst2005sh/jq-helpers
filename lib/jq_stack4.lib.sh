@@ -3,8 +3,8 @@ jq_stack4() {
 	local self=jq_stack4
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		(:rawdef)	echo >&2 "OBSOLETED; Use $self :function instead of $self :rawdef"; return 1;;
-		(:locals)	echo >&2 "OBSOLETED"; return 1;;
+		(:rawdef)	echo >&2 "DEPRECATED; Use $self :function instead of $self :rawdef"; return 1;;
+		(:locals)	echo >&2 "DEPRECATED"; return 1;;
 #		(:rawdef)	shift; set -- :function "$@";;
 #		(:locals)	return 0;;
 		esac
@@ -29,7 +29,7 @@ jq_stack4() {
 				echo >&2 "ERROR: ${self}: not initialized (auto init is disabled). Use \"$self :init\" before this action (or enable auto init with \"$self :autoinit\")"
 				return 1
 			fi
-			# nostrict, auto init
+			# autoinit
 			$self :init
 		fi
 
@@ -45,7 +45,7 @@ jq_stack4() {
 			$self :option.. "$1" "$2" "$3"
 			shift 2
 		;;
-		# (--) TODO ;;
+		# (--) TODO? ;;
 		(-*)
 			echo >&2 "ERROR: $self does not known this jq option ($1)"
 			return 1
