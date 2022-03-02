@@ -187,6 +187,7 @@ jq_stack4() {
 			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|flatten;
 			# options_dedup(.) will keep the first option use
 			# options_dedup(reverse) will keep the last option use
+			# TODO: join consecutive short options (-s -c -M ===> -scM)
 			[	(options_dedup(reverse)[]),
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
 				) + (
@@ -239,7 +240,7 @@ jq_stack4() {
 				local o
 				eval "o=\"\${$fname}\""
 				shift
-				set -- :option "$o" "$@"
+				set -- "$o" "$@"
 				continue
 			fi
 		;;
@@ -263,8 +264,8 @@ jq_stack4() {
 				return 1
 			fi
 			shift
-			"$cmd" "$@"
-			return $?
+			"$cmd" "$@" || return 1
+			continue
 		;;
 		(*)
 			case "${JQ_STACK4_ELSE:-error}" in
