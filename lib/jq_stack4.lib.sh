@@ -62,6 +62,14 @@ jq_stack4() {
 		fi
 
 		case "$1" in
+		(-[sRncCMaSrje][sRncCMaSrje]*)
+			# Split concatenated short options: -xyz to -x -yz (and the next loop will split -yz to -y -z)
+			local opt1="$(printf %.2s "$1")"
+			local opts="-${1#-?}"
+			shift
+			set -- "$opt1" "$opts" "$@"
+			continue
+		;;
 		(-*) set -- :option: "$@";;
 		esac
 
