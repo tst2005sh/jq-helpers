@@ -184,10 +184,13 @@ jq_stack4() {
 			jq -sr '
 			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
 			def unique_no_sort_by(f): to_entries|unique_by(.value|f)|sort_by(.key)|map(.value);
-			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|flatten;
+			def merge_consecutive_short_options:
+				map(if type=="string" and startswith("--") then [.] else . end)|
+				reduce .[] as $i ([]; (.[-1]+=($i |sub("^-";"")) )? // .+=[ $i ])
+			;
+			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|merge_consecutive_short_options|flatten;
 			# options_dedup(.) will keep the first option use
 			# options_dedup(reverse) will keep the last option use
-			# TODO: join consecutive short options (-s -c -M ===> -scM)
 			[	(options_dedup(reverse)[]),
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
 				) + (
