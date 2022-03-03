@@ -19,6 +19,7 @@ test_opt_dedup() {
 test_opt_split() {
 	jq_stack4 :init
 	jq_stack4 -scMr
+	jq_stack4 --raw-output
 
 	jq_stack4 :cat
 	jq_stack4 :gen

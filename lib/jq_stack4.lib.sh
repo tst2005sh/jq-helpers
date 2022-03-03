@@ -32,8 +32,9 @@ jq_stack4() {
 			case "$1" in
 			(autoinit) JQ_STACK4_AUTOINIT=$v ;;
 			(external) JQ_STACK4_EXTERNAL=$v ;;
+			(shorter-option) JQ_STACK4_SHORTEROPTION=$v;;
 			(*)
-				echo >&2 "ERROR: $self: unknown argument for :with/:without command. Expected: autoinit|external, got: $1"
+				echo >&2 "ERROR: $self: unknown argument for :with/:without command. Expected: autoinit|external|shorter-option, got: $1"
 				return 1
 			;;
 			esac
@@ -76,6 +77,15 @@ jq_stack4() {
 		case "$1" in
 		(:option:)
 			shift
+			if [ "${JQ_STACK4_SHORTEROPTION:-true}" = true ]; then
+				local a=''
+				case "$1" in
+				(--color-output|--monochrome-output|--sort-keys)
+					a="$(printf %.1s "${1#--}"|tr a-z A-Z)";false;;
+				(--ascii-output|--compact-output|--exit-status|--from-file|--join-output|--null-input|--raw-output|--slurp)
+					a="$(printf %.1s "${1#--}")";false;;
+				esac || { shift; set -- "-$a" "$@"; }
+			fi
 			case "$1" in
 			(-[CM]|--color-output|--monochrome-output)
 				# -M will disable the color, even if -C is use after (no need to remind who is use the last)
