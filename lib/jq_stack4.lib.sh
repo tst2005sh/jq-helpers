@@ -13,9 +13,9 @@ jq_stack4() {
 		(:else)
 			shift
 			case "$1" in
-			(call|external|error) JQ_STACK4_ELSE="$1" ;;
+			(call|external|error|modcall) JQ_STACK4_ELSE="$1" ;;
 			(*)
-				echo >&2 "ERROR: $self: unknown value for :else argument. Expected: call|external|error, got: $1"
+				echo >&2 "ERROR: $self: unknown value for :else argument. Expected: call|external|error|modcall, got: $1"
 				return 1
 			;;
 			esac
@@ -291,7 +291,7 @@ jq_stack4() {
 				echo >&2 "ERROR: ${self}: unknown command/option ($1). Please configure the behavior (currently: $self :else error). Use \"$self :else call\" to add $1 like \"$self :call $1\" or Use \"$self :else external\" to mimic \"$self :$1\" maybe for jq_stack3 compat (See also :with external)"
 				return 1
 			;;
-			(call) set -- :call "$@"; continue;;
+			(call|modcall) set -- ":${JQ_STACK4_ELSE}" "$@"; continue;;
 			(external) set -- ":$@"; continue;;
 			esac
 		;;
