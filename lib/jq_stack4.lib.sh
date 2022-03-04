@@ -94,7 +94,12 @@ jq_stack4() {
 			(-[sRncaSrje]|--version|--seq|--stream|--slurp|--raw-input|--null-input|--compact-output|--tab|--ascii-output|--unbuffered|--sort-keys|--raw-output|--join-output|--exit-status)
 				$self :option:0arg "$1"
 			;;
-			(--indent|-f|--from-file|-L) # 1 arg
+			(-L?*) # split "-Ldirectory" (1 arg) to "-L" "directory" (2 arg)
+				local opt="$1";shift
+				set -- "-L" "${opt#-L}" "$@"
+				continue
+			;;
+			(--indent|--from-file|-f|-L) # 1 arg
 				$self :option:1arg "$1" "$2"
 				shift 1
 			;;
@@ -195,7 +200,7 @@ jq_stack4() {
 			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
 			def unique_no_sort_by(f): to_entries|unique_by(.value|f)|sort_by(.key)|map(.value);
 			def merge_consecutive_short_options:
-				map(if type=="string" and startswith("--") then [.] else . end)|
+				map(if type=="string" and ( (startswith("-")|not) or (startswith("--") or startswith("-L")) ) then [.] else . end)|
 				reduce .[] as $i ([]; (.[-1]+=($i |sub("^-";"")) )? // .+=[ $i ])
 			;
 			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|merge_consecutive_short_options|flatten;
