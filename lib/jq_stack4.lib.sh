@@ -3,13 +3,46 @@ jq_stack4() {
 	local self=jq_stack4
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		(:rawdef)	echo >&2 "DEPRECATED; Use $self :function instead of $self :rawdef"; return 1;;
-		(:locals)	echo >&2 "DEPRECATED"; return 1;;
-#		(:rawdef)	shift; set -- :function "$@";;
-#		(:locals)	return 0;;
-		esac
-
-		case "$1" in
+		(--help|-h) $self :help;return 0;;
+		(:help)
+			{
+			echo "Usage: $self [<option>]|<command [argument]>"
+			echo ''
+			echo 'Behavior commands and argument values:'
+			echo '  :else call|external|error|modcall (default: error)'
+			echo '  :with|:without autoinit|external|shorter-option'
+			echo ''
+			echo 'High level command:'
+			echo '  :modload    <modname>        -- Find and load the <modname> module'
+			echo '  :modoption  <modname>        -- equals to :option: $jq_option_<modname>'
+			echo '  :modcall    <modname(*)>     -- equals to :moadload ... :modoption ... :call ...'
+			echo '  :modprecall <modname(*)>     -- equals to :moadload ... :modoption ... :precall ...'
+			echo ''
+			echo 'Common command:'
+			echo '  :init                        -- '
+			echo '  :call    <jq-code>           -- '
+			echo '  :precall <jq-code>           -- '
+			echo '  :run [-n]                    -- '
+			echo '  :deinit                      -- '
+			echo ''
+			echo 'Low level command:'
+			echo '  :option <rawvalue>           -- '
+			echo '  :option: <valid-option>      -- '
+			echo '  :function F :named N         -- '
+			echo '  :envfunction E'
+			echo '  :ifndef <name> :function|:envfunction ...'
+			echo '  :option:0arg'
+			echo '  :option:1arg'
+			echo '  :option:2arg'
+			echo '  :cat                         -- for debug purpose: dump the stacked JSON content'
+			echo '  :gen                         -- render the stacked content to jq arguments'
+			echo ''
+			echo 'defaults behavior:'
+			echo '  :else error  :with autoinit  :with shorter-option  :without external'
+			} >&2
+			#echo "debug: $#: $*"
+			return 0
+		;;
 		(:else)
 			shift
 			case "$1" in
