@@ -39,6 +39,10 @@ test1a() {
 #	jq_stack3 oneline -c sortallarrays: '.|sortallarrays|.'
 #}
 
+test4compat3() {
+	[ "$(jq_stack3 2>/dev/null init locals rawdef foo 'def foo: .;' call foo gen deinit)" = "'def foo: .;foo'" ] && echo ok || echo fail
+}
+
 checktest() {
 	read result;
 	[ "$result" = '["1","2","3"]' ] && echo ok || echo fail
@@ -47,5 +51,7 @@ checktest() {
 echo '["3", "1", "2"]' | test2a | checktest
 #echo '["3", "1", "2"]' | test2b | checktest
 echo '["3", "1", "2"]' | test1a | checktest
+
+test4compat3
 
 jq_stack3 deinit

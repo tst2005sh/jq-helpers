@@ -1,15 +1,15 @@
 
 for f in init deinit precall call option function envfunction ifndef cat gen run modload modcall modprecall; do
 
-code='jq_stack4_'"${f}"'() {
+code='jq_cmd4_'"${f}"'() {
 	echo >&2 "WARNING: COMPAT: fixed from \"'"$f"'\" to \":'"$f"'\""
 	jq_stack4 ":'"$f"'" "$@"
 }'
 	eval "$code"
 done
 
-jq_stack4_locals() { true; }
-jq_stack4_rawdef() {
+jq_cmd4_locals() { jq_stack4 "$@"; }
+jq_cmd4_rawdef() {
 	echo >&2 "WARNING: OBSOLETE \"rawdef\" fixed by using \":function\""
 	shift; jq_stack4 ":function" "$@"
 }

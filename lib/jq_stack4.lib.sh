@@ -36,6 +36,7 @@ jq_stack4() {
 			echo '  :option:2arg'
 			echo '  :cat                         -- for debug purpose: dump the stacked JSON content'
 			echo '  :gen                         -- render the stacked content to jq arguments'
+		#TODO#	echo '  :file <path/to/file.json>    -- '
 			echo ''
 			echo 'defaults behavior:'
 			echo '  :else error  :with autoinit  :with shorter-option  :without external'
@@ -314,9 +315,9 @@ jq_stack4() {
 				echo >&2 "ERROR: ${self}: Invalid command $1";
 				return 1
 			fi
-			shift
+			local rawcmd="$1";shift
 			"$cmd" "$@" || return 1
-			continue
+			return $?
 		;;
 		(*)
 			case "${JQ_STACK4_ELSE:-error}" in
