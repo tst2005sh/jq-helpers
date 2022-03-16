@@ -166,7 +166,7 @@ jq_stack4() {
 		;;
 		(:option:2arg)
 			shift
-			jq -ncM --arg k "option" --arg opt "$1" --arg arg1 "$2" '{($k):[$opt,$arg1,$arg2]}' >> "$JQ_STACK4_TMP"
+			jq -ncM --arg k "option" --arg opt "$1" --arg arg1 "$2" --arg arg2 "$3" '{($k):[$opt,$arg1,$arg2]}' >> "$JQ_STACK4_TMP"
 			shift 2
 		;;
 		(:precall)
