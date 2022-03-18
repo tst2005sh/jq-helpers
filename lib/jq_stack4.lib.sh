@@ -36,7 +36,7 @@ jq_stack4() {
 			echo '  :option:2arg'
 			echo '  :cat                         -- for debug purpose: dump the stacked JSON content'
 			echo '  :gen                         -- render the stacked content to jq arguments'
-		#TODO#	echo '  :file <path/to/file.json>    -- '
+			echo '  :file <path/to/file.json>    -- '
 			echo ''
 			echo 'defaults behavior:'
 			echo '  :else error  :with autoinit  :with shorter-option  :without external'
@@ -155,21 +155,26 @@ jq_stack4() {
 			local k="${1#:}"; shift
 			jq -ncM --arg k "$k" --arg opt "$1" '{($k):$opt}' >> "$JQ_STACK4_TMP"
 		;;
-		(:option:0arg)
+		(:option:0arg) # 1 arg (opt+0arg)
 			local k="${1#:}"; k="${k%%:*}"; shift
 			jq -ncM --arg k "$k" --arg opt "$1" '{($k):$opt}' >> "$JQ_STACK4_TMP"
 		;;
-		(:option:1arg)
+		(:option:1arg) # 2 arg (opt+1arg)
 			shift
 			jq -ncM --arg k "option" --arg opt "$1" --arg arg1 "$2" '{($k):[$opt,$arg1]}' >> "$JQ_STACK4_TMP"
 			shift 1
 		;;
-		(:option:2arg)
+		(:option:2arg) # 3 arg (opt+2arg)
 			shift
 			jq -ncM --arg k "option" --arg opt "$1" --arg arg1 "$2" --arg arg2 "$3" '{($k):[$opt,$arg1,$arg2]}' >> "$JQ_STACK4_TMP"
 			shift 2
 		;;
-		(:precall)
+		(:file) # 1 arg
+			shift
+			jq -ncM --arg k "file" --arg arg1 "$1" '{($k):$arg1}' >> "$JQ_STACK4_TMP"
+			#shift 1
+		;;
+		(:precall) # 1 arg
 			jq -ncM --arg arg2 "$2" '{"call":$arg2,"pre":-1}' >> "$JQ_STACK4_TMP"
 			shift
 		;;
@@ -246,9 +251,11 @@ jq_stack4() {
 					map(select(.call?)|select(.call!="."))|
 					to_entries|sort_by(if .value.pre then -.key else .key end)|
 					map(.value.call)|join("|")
-				)
+				),
+				map(select(.file?)|.file)[]
 			]|tosh
 			' < "$JQ_STACK4_TMP"
+			exit
 		;;
 		(:run)
 			if [ "$2" = "-n" ]; then
