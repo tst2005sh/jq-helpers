@@ -21,6 +21,7 @@ jq_stack4() {
 			echo 'Common command:'
 			echo '  :init                        -- '
 			echo '  :call    <jq-code>           -- '
+			echo '  :mapcall <jq-code>           -- '
 			echo '  :precall <jq-code>           -- '
 			echo '  :run [-n]                    -- '
 			echo '  :deinit                      -- '
@@ -151,7 +152,7 @@ jq_stack4() {
 			;;
 			esac
 		;;
-		(:call|:option)
+		(:call|:option|:mapcall)
 			local k="${1#:}"; shift
 			jq -ncM --arg k "$k" --arg opt "$1" '{($k):$opt}' >> "$JQ_STACK4_TMP"
 		;;
@@ -174,9 +175,9 @@ jq_stack4() {
 			jq -ncM --arg k "file" --arg arg1 "$1" '{($k):$arg1}' >> "$JQ_STACK4_TMP"
 			#shift 1
 		;;
-		(:precall) # 1 arg
-			jq -ncM --arg arg2 "$2" '{"call":$arg2,"pre":-1}' >> "$JQ_STACK4_TMP"
-			shift
+		(:precall|:premapcall) # 1 arg
+			local k="${1#:pre}"; shift
+			jq -ncM --arg k "$k" --arg arg1 "$1" '{($k):$arg1,"pre":-1}' >> "$JQ_STACK4_TMP"
 		;;
 		(:function)
 			local funcdefclean='def funcdefclean:
@@ -243,14 +244,17 @@ jq_stack4() {
 				reduce .[] as $i ([]; (.[-1]+=($i |sub("^-";"")) )? // .+=[ $i ])
 			;
 			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|merge_consecutive_short_options|flatten;
+			def unsorted_group_by(f): reduce .[] as $item ([];if length==0 then [[$item]] elif last[0]|f==($item|f) then last+=[$item] else .+[[$item]] end);
 			# options_dedup(.) will keep the first option use
 			# options_dedup(reverse) will keep the last option use
 			[	(options_dedup(reverse)[]),
 				(	map(select(.function?)) | map(.function|join("\n")) |join("")
 				) + (
-					map(select(.call?)|select(.call!="."))|
-					to_entries|sort_by(if .value.pre then -.key else .key end)|
-					map(.value.call)|join("|")
+					map(select(.call? or .mapcall?)|select(.call!="."))
+					|to_entries|sort_by(if .value.pre then -.key else .key end)|map(.value)
+					|unsorted_group_by( has("mapcall") )
+					|map( if first|has("mapcall") then "map(\(map(.mapcall)|join("|")))" else map(.call)|join("|") end )
+					|join("|")
 				),
 				map(select(.file?)|.file)[]
 			]|tosh
@@ -305,7 +309,7 @@ jq_stack4() {
 		;;
 		# 1 arg: "modname"
 		# 1 arg: "modname(...)"
-		(:modcall|:modprecall)
+		(:modcall|:modprecall|:modmapcall|modpremapcall)
 			local cmd="${1#:mod}";shift	# call|precall
 			local code="$1";shift		# NAME(...)
 			local name="${code%%\(*}"	# NAME
