@@ -238,12 +238,12 @@ jq_stack4() {
 		(:gen)
 			jq -sr '
 			def tosh: map(if test("^[a-zA-Z0-9./=_-]+$") then . else @sh end)|join(" ");
-			def unique_no_sort_by(f): to_entries|unique_by(.value|f)|sort_by(.key)|map(.value);
+			def unsorted_unique_by(f): to_entries|unique_by(.value|f)|sort_by(.key)|map(.value);
 			def merge_consecutive_short_options:
 				map(if type=="string" and ( (startswith("-")|not) or (startswith("--") or startswith("-L")) ) then [.] else . end)|
 				reduce .[] as $i ([]; (.[-1]+=($i |sub("^-";"")) )? // .+=[ $i ])
 			;
-			def options_dedup(r): map(.option//empty)|r|unique_no_sort_by(@sh)|r|merge_consecutive_short_options|flatten;
+			def options_dedup(r): map(.option//empty)|r|unsorted_unique_by(@sh)|r|merge_consecutive_short_options|flatten;
 			def unsorted_group_by(f): reduce .[] as $item ([];if length==0 then [[$item]] elif last[0]|f==($item|f) then last+=[$item] else .+[[$item]] end);
 			# options_dedup(.) will keep the first option use
 			# options_dedup(reverse) will keep the last option use
